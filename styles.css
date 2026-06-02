@@ -32,6 +32,8 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 8px 20px;
+    flex-wrap: nowrap;
+    gap: 10px;
 }
 
 #nav-club-name {
@@ -125,9 +127,11 @@ body {
 
     .hamburger {
         display: flex;
+        margin-left: auto;
     }
 
     #nav-menu {
+        display: none;
         position: absolute;
         top: 60px;
         left: 0;
@@ -136,13 +140,11 @@ body {
         background-color: rgba(0, 64, 128, 0.98);
         padding: 15px;
         gap: 10px;
-        max-height: 0;
-        overflow: hidden;
-        transition: max-height 0.3s ease;
+        transition: all 0.3s ease;
     }
 
     #nav-menu.active {
-        max-height: 500px;
+        display: flex;
     }
 
     #nav-menu li {
