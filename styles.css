@@ -745,7 +745,8 @@ footer::before {
 .carousel-inner {
     position: relative;
     width: 100%;
-    height: 500px;
+    aspect-ratio: 16 / 9;
+    min-height: 420px;
     overflow: hidden;
 }
 
@@ -877,7 +878,8 @@ footer::before {
 
     /* Carousel Mobile */
     .carousel-inner {
-        height: 300px;
+        aspect-ratio: 16 / 9;
+        min-height: 340px;
     }
 
     .carousel-prev,
