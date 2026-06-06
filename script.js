@@ -17,7 +17,8 @@ const translations = {
         heroSubtitle: "United by Football, Driven by Passion",
         learnMore: "Learn More",
         contactTitle: "Contact Us",
-        contactText: "Get in touch with Rorya United FC. We'd love to hear from you!"
+        contactText: "Get in touch with Rorya United FC. We'd love to hear from you!",
+        galleryTitle: "Gallery"
     },
     sw: {
         clubName: "Rorya United Football Club (RU FC)",
@@ -37,7 +38,8 @@ const translations = {
         heroSubtitle: "United by Football, Driven by Passion",
         learnMore: "Jifunze Zaidi",
         contactTitle: "Wasiliana Nasi",
-        contactText: "Wasiliana na Rorya United FC. Tunapenda kusikia kutoka kwako!"
+        contactText: "Wasiliana na Rorya United FC. Tunapenda kusikia kutoka kwako!",
+        galleryTitle: "Picha"
     }
 };
 
@@ -161,6 +163,7 @@ function updateLanguage() {
     document.getElementById('slogan-text').textContent = lang.sloganText;
     document.getElementById('founder-title').textContent = lang.founderTitle;
     document.getElementById('founder-text').textContent = lang.founderText;
+    document.getElementById('gallery-title').textContent = lang.galleryTitle;
     document.getElementById('footer-text').textContent = lang.footerText;
 }
 
@@ -186,3 +189,86 @@ scrollToTopBtn.addEventListener('click', () => {
         behavior: 'smooth'
     });
 });
+
+// Carousel Functionality
+let currentSlide = 0;
+const carouselItems = document.querySelectorAll('.carousel-item');
+const carouselDotsContainer = document.querySelector('.carousel-dots');
+const totalSlides = carouselItems.length;
+
+// Create dots
+function createCarouselDots() {
+    for (let i = 0; i < totalSlides; i++) {
+        const dot = document.createElement('button');
+        dot.className = 'carousel-dot';
+        if (i === 0) dot.classList.add('active');
+        dot.addEventListener('click', () => goToSlide(i));
+        carouselDotsContainer.appendChild(dot);
+    }
+}
+
+// Show slide
+function showSlide(n) {
+    carouselItems.forEach(item => item.classList.remove('active'));
+    document.querySelectorAll('.carousel-dot').forEach(dot => dot.classList.remove('active'));
+    
+    carouselItems[n].classList.add('active');
+    document.querySelectorAll('.carousel-dot')[n].classList.add('active');
+}
+
+// Go to specific slide
+function goToSlide(n) {
+    currentSlide = n;
+    showSlide(currentSlide);
+}
+
+// Next slide
+function nextSlide() {
+    currentSlide = (currentSlide + 1) % totalSlides;
+    showSlide(currentSlide);
+}
+
+// Previous slide
+function prevSlide() {
+    currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+    showSlide(currentSlide);
+}
+
+// Event listeners for carousel buttons
+document.querySelector('.carousel-next').addEventListener('click', nextSlide);
+document.querySelector('.carousel-prev').addEventListener('click', prevSlide);
+
+// Initialize carousel
+createCarouselDots();
+
+// Auto-advance carousel every 5 seconds
+setInterval(nextSlide, 5000);
+
+// About section video handling: respect reduced motion and pause when off-screen
+(function handleAboutVideo(){
+    const aboutVideo = document.getElementById('about-video');
+    if (!aboutVideo) return;
+
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReduced) {
+        aboutVideo.pause();
+        aboutVideo.removeAttribute('autoplay');
+        return;
+    }
+
+    aboutVideo.muted = true;
+    aboutVideo.play().catch(() => {});
+
+    const vidObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                aboutVideo.play().catch(() => {});
+            } else {
+                aboutVideo.pause();
+            }
+        });
+    }, { threshold: 0.25 });
+
+    const aboutSection = document.getElementById('about');
+    if (aboutSection) vidObserver.observe(aboutSection);
+})();
