@@ -117,6 +117,23 @@ window.addEventListener('scroll', () => {
     }
 });
 
+// Active nav link while scrolling
+const sectionLinks = document.querySelectorAll('#nav-menu a[href^="#"]');
+const sections = document.querySelectorAll('section[id]');
+function updateActiveNavLink() {
+    const fromTop = window.scrollY + 140;
+    sections.forEach(section => {
+        const top = section.offsetTop;
+        const height = section.offsetHeight;
+        const link = document.querySelector(`#nav-menu a[href="#${section.id}"]`);
+        if (link) {
+            link.classList.toggle('active', top <= fromTop && top + height > fromTop);
+        }
+    });
+}
+window.addEventListener('scroll', updateActiveNavLink);
+window.addEventListener('load', updateActiveNavLink);
+
 // Values flip card builder + toggle behavior (accessible + touch-friendly)
 function toggleValueItem(item, btn) {
     const isOpen = item.classList.toggle('open');
@@ -299,11 +316,80 @@ function prevSlide() {
 document.querySelector('.carousel-next').addEventListener('click', nextSlide);
 document.querySelector('.carousel-prev').addEventListener('click', prevSlide);
 
+const carousel = document.querySelector('.carousel');
+let carouselInterval = null;
+let currentLightboxIndex = 0;
+const galleryImages = document.querySelectorAll('.carousel-item img');
+const lightbox = document.getElementById('lightbox');
+const lightboxImage = lightbox?.querySelector('.lightbox-image');
+const lightboxClose = lightbox?.querySelector('.lightbox-close');
+const lightboxPrev = lightbox?.querySelector('.lightbox-prev');
+const lightboxNext = lightbox?.querySelector('.lightbox-next');
+
+function openLightbox(index) {
+    currentLightboxIndex = index;
+    if (!lightbox || !lightboxImage) return;
+    const image = carouselItems[index].querySelector('img');
+    lightboxImage.src = image?.src || '';
+    lightboxImage.alt = image?.alt || 'Gallery preview';
+    lightbox.classList.add('open');
+    lightbox.setAttribute('aria-hidden', 'false');
+}
+
+function closeLightbox() {
+    if (!lightbox) return;
+    lightbox.classList.remove('open');
+    lightbox.setAttribute('aria-hidden', 'true');
+}
+
+function prevLightbox() {
+    openLightbox((currentLightboxIndex - 1 + totalSlides) % totalSlides);
+}
+
+function nextLightbox() {
+    openLightbox((currentLightboxIndex + 1) % totalSlides);
+}
+
+function startCarousel() {
+    carouselInterval = setInterval(nextSlide, 5000);
+}
+
+function stopCarousel() {
+    if (carouselInterval) {
+        clearInterval(carouselInterval);
+        carouselInterval = null;
+    }
+}
+
+if (carousel) {
+    carousel.addEventListener('mouseenter', stopCarousel);
+    carousel.addEventListener('mouseleave', startCarousel);
+}
+
+galleryImages.forEach((img, index) => {
+    img.style.cursor = 'pointer';
+    img.addEventListener('click', () => openLightbox(index));
+});
+
+lightbox?.addEventListener('click', (event) => {
+    if (event.target === lightbox) closeLightbox();
+});
+
+lightboxClose?.addEventListener('click', closeLightbox);
+lightboxPrev?.addEventListener('click', prevLightbox);
+lightboxNext?.addEventListener('click', nextLightbox);
+
+document.addEventListener('keydown', (event) => {
+    if (!lightbox?.classList.contains('open')) return;
+    if (event.key === 'Escape') closeLightbox();
+    if (event.key === 'ArrowLeft') prevLightbox();
+    if (event.key === 'ArrowRight') nextLightbox();
+});
+
 // Initialize carousel
 createCarouselDots();
-
-// Auto-advance carousel every 5 seconds
-setInterval(nextSlide, 5000);
+showSlide(0);
+startCarousel();
 
 // About section video handling: respect reduced motion and pause when off-screen
 (function handleAboutVideo(){

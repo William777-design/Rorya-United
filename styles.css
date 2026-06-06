@@ -84,7 +84,8 @@ body {
     font-size: 0.9em;
 }
 
-#nav-menu a:hover {
+#nav-menu a:hover,
+#nav-menu a.active {
     background-color: rgba(255, 255, 255, 0.2);
 }
 
@@ -803,6 +804,100 @@ footer::before {
     padding: 20px;
     background-color: rgba(0, 64, 128, 0.1);
     border-radius: 0 0 15px 15px;
+}
+
+.lightbox {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    padding: 20px;
+}
+
+.lightbox.open {
+    display: flex;
+}
+
+.lightbox-inner {
+    position: relative;
+    max-width: 95vw;
+    max-height: 95vh;
+    width: min(960px, 100%);
+    background: rgba(255,255,255,0.05);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+
+.lightbox-image {
+    width: 100%;
+    height: auto;
+    display: block;
+    max-height: 85vh;
+    object-fit: contain;
+    background: #000;
+}
+
+.lightbox-close,
+.lightbox-prev,
+.lightbox-next {
+    position: absolute;
+    background: rgba(0,0,0,0.6);
+    border: none;
+    color: white;
+    padding: 12px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.lightbox-close:hover,
+.lightbox-prev:hover,
+.lightbox-next:hover {
+    transform: scale(1.05);
+    background: rgba(0,0,0,0.85);
+}
+
+.lightbox-close {
+    top: 14px;
+    right: 14px;
+    width: 42px;
+    height: 42px;
+    font-size: 1.5em;
+    line-height: 1;
+}
+
+.lightbox-prev,
+.lightbox-next {
+    top: 50%;
+    transform: translateY(-50%);
+    width: 52px;
+    height: 52px;
+    font-size: 1.5em;
+}
+
+.lightbox-prev {
+    left: 14px;
+}
+
+.lightbox-next {
+    right: 14px;
+}
+
+@media (max-width: 768px) {
+    .lightbox-inner {
+        width: 100%;
+    }
+
+    .lightbox-close,
+    .lightbox-prev,
+    .lightbox-next {
+        width: 40px;
+        height: 40px;
+    }
 }
 
 .carousel-dot {
