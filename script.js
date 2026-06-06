@@ -9,7 +9,13 @@ const translations = {
         visionText: "To be the best football club in Mara Region and one of the leading clubs in nurturing youth talents in the country, from district to regional to national level.",
         valuesTitle: "Our Values",
         values: ["Discipline", "Unity", "Respect", "Commitment", "Patriotism"],
-        valuesDetail: "Learn more about {value}.",
+        valuesDetails: [
+            "Discipline keeps every player focused in training and on match day.",
+            "Unity means working together on and off the pitch as one team.",
+            "Respect builds trust between teammates, coaches, fans, and opponents.",
+            "Commitment means showing up every day ready to grow and perform.",
+            "Patriotism is pride in representing Rorya District through football."
+        ],
         sloganTitle: "Our Slogan",
         sloganText: "We are United by Football",
         founderTitle: "Our Founder",
@@ -31,7 +37,13 @@ const translations = {
         visionText: "Kuwa klabu bora ya mpira wa miguu katika Mkoa wa Mara na moja ya klabu innazoongoza kwa kukuza vipaji vya vijana nchini Wilayani, Mkoni mpaka kitaifa.",
         valuesTitle: "Maadili Yetu",
         values: ["Nidhamu", "Umoja", "Heshima", "Kujituma", "Uzalendo"],
-        valuesDetail: "Jifunze zaidi kuhusu {value}.",
+        valuesDetails: [
+            "Nidhamu inaweka wachezaji wote wakilenga katika mafunzo na siku ya mechi.",
+            "Umoja unamaanisha kufanya kazi pamoja uwanjani na nje ya uwanja kama timu moja.",
+            "Heshima hujenga uaminifu kati ya wachezaji, makocha, mashabiki, na wapinzani.",
+            "Kujituma kunamaanisha kuonekana kila siku tayari kukua na kutoa kiwango.",
+            "Uzalendo ni fahari ya kuwakilisha Wilaya ya Rorya kupitia mpira wa miguu."
+        ],
         sloganTitle: "Slogani Yetu",
         sloganText: "We are United by Football",
         founderTitle: "Mwanzilishi Wetu",
@@ -105,16 +117,11 @@ window.addEventListener('scroll', () => {
     }
 });
 
-// Values accordion builder + toggle behavior (accessible + touch-friendly)
-function toggleValueItem(item, btn, content) {
+// Values flip card builder + toggle behavior (accessible + touch-friendly)
+function toggleValueItem(item, btn) {
     const isOpen = item.classList.toggle('open');
     btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-    if (isOpen) {
-        // set explicit maxHeight to allow transition
-        content.style.maxHeight = content.scrollHeight + 'px';
-    } else {
-        content.style.maxHeight = null;
-    }
+    btn.tabIndex = isOpen ? -1 : 0;
 }
 
 // Typing effect for hero subtitle (optional enhancement)
@@ -156,34 +163,58 @@ function updateLanguage() {
         const item = document.createElement('div');
         item.className = 'value-item';
 
-        const btn = document.createElement('button');
-        btn.className = 'value-toggle';
-        btn.type = 'button';
-        btn.id = `value-toggle-${i}`;
-        btn.setAttribute('aria-expanded', 'false');
-        btn.setAttribute('aria-controls', `value-content-${i}`);
-        btn.textContent = value;
+        const cardInner = document.createElement('div');
+        cardInner.className = 'card-inner';
 
-        const content = document.createElement('div');
-        content.className = 'value-content';
-        content.id = `value-content-${i}`;
-        content.setAttribute('role', 'region');
-        content.setAttribute('aria-labelledby', btn.id);
+        const cardFront = document.createElement('button');
+        cardFront.className = 'card-face card-front';
+        cardFront.type = 'button';
+        cardFront.id = `value-toggle-${i}`;
+        cardFront.setAttribute('aria-expanded', 'false');
+        cardFront.setAttribute('aria-controls', `value-content-${i}`);
+
+        const title = document.createElement('span');
+        title.className = 'card-title';
+        title.textContent = value;
+
+        const hint = document.createElement('span');
+        hint.className = 'card-hint';
+        hint.textContent = currentLang === 'sw' ? 'Gonga ili kubadilisha' : 'Tap to flip';
+
+        cardFront.appendChild(title);
+        cardFront.appendChild(hint);
+
+        const cardBack = document.createElement('div');
+        cardBack.className = 'card-face card-back';
+        cardBack.id = `value-content-${i}`;
+        cardBack.setAttribute('role', 'button');
+        cardBack.setAttribute('aria-label', currentLang === 'sw' ? 'Bonyeza ili kurudi nyuma' : 'Tap to flip back');
+        cardBack.tabIndex = 0;
+
         const p = document.createElement('p');
-        const detailText = (lang.valuesDetail || 'Learn more about {value}.').replace('{value}', value);
+        const detailText = (lang.valuesDetails && lang.valuesDetails[i]) ? lang.valuesDetails[i] : '';
         p.textContent = detailText;
-        content.appendChild(p);
+        cardBack.appendChild(p);
 
-        btn.addEventListener('click', () => toggleValueItem(item, btn, content));
-        btn.addEventListener('keydown', (e) => {
+        cardFront.addEventListener('click', () => toggleValueItem(item, cardFront));
+        cardFront.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
-                btn.click();
+                cardFront.click();
             }
         });
 
-        item.appendChild(btn);
-        item.appendChild(content);
+        cardBack.addEventListener('click', () => toggleValueItem(item, cardFront));
+        cardBack.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggleValueItem(item, cardFront);
+            }
+        });
+
+        cardInner.appendChild(cardFront);
+        cardInner.appendChild(cardBack);
+        item.appendChild(cardInner);
         valuesList.appendChild(item);
     });
     document.getElementById('slogan-title').textContent = lang.sloganTitle;

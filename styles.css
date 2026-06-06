@@ -459,62 +459,110 @@ body {
     box-shadow: 0 4px 15px rgba(0, 64, 128, 0.2);
 }
 
-/* Values accordion (accessible + touch-friendly) */
+/* Values flip cards (accessible + touch-friendly) */
 .values-accordion {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    justify-content: center;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 18px;
+    justify-items: center;
+    margin-top: 20px;
 }
 
 .value-item {
-    background: linear-gradient(135deg, #004080 0%, #007bff 100%);
-    color: white;
-    border-radius: 12px;
-    width: calc(20% - 12px);
-    min-width: 140px;
-    box-shadow: 0 8px 20px rgba(0,64,128,0.18);
-    overflow: hidden;
-    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    position: relative;
+    width: 100%;
+    max-width: 260px;
+    min-width: 180px;
+    perspective: 1200px;
 }
 
-.value-item:active { transform: scale(.995); }
-
-.value-toggle {
-    display: block;
+.card-inner {
+    position: relative;
     width: 100%;
-    text-align: center;
-    padding: 16px 12px;
-    background: transparent;
-    border: none;
-    color: white;
-    font-weight: 700;
-    font-size: 1em;
+    min-height: 220px;
+    transform-style: preserve-3d;
+    transition: transform 0.65s ease;
+}
+
+.value-item.open .card-inner {
+    transform: rotateY(180deg);
+}
+
+.card-face {
+    position: absolute;
+    inset: 0;
+    border-radius: 22px;
+    backface-visibility: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 24px 18px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.15);
     cursor: pointer;
 }
 
-.value-toggle:focus { outline: 3px solid rgba(255,107,53,0.25); }
-
-.value-content {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.32s ease, padding 0.28s ease;
-    background: #fff;
-    color: #222;
-    padding: 0 12px;
+.card-front {
+    background: linear-gradient(135deg, #004080 0%, #007bff 100%);
+    color: white;
 }
 
-.value-content p { margin: 12px 0; }
+.card-back {
+    background: white;
+    color: #222;
+    transform: rotateY(180deg);
+    border: 2px solid rgba(0, 64, 128, 0.14);
+}
 
-.value-item.open { box-shadow: 0 14px 36px rgba(0,64,128,0.28); transform: translateY(-4px); }
-.value-item.open .value-content { padding: 12px; }
+.card-title {
+    font-size: 1.2em;
+    font-weight: 800;
+    margin-bottom: 12px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    text-align: center;
+}
 
-/* Responsive: stack as accordion on small screens */
+.card-hint {
+    font-size: 0.95em;
+    opacity: 0.8;
+    text-align: center;
+}
+
+.card-back p {
+    margin: 0;
+    line-height: 1.7;
+    text-align: center;
+    font-size: 0.98em;
+}
+
+.card-face:focus-visible {
+    outline: 3px solid rgba(255, 107, 53, 0.35);
+    outline-offset: 6px;
+}
+
 @media (max-width: 768px) {
-    .values-accordion { flex-direction: column; gap: 10px; }
-    .value-item { width: 100%; min-width: 0; border-radius: 10px; }
-    .value-toggle { padding: 18px; font-size: 1.05em; min-height: 48px; }
-    .value-content { font-size: 0.98em; }
+    .values-accordion {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .value-item {
+        max-width: 100%;
+        min-width: auto;
+    }
+
+    .card-face {
+        padding: 20px 16px;
+    }
+
+    .card-title {
+        font-size: 1.15em;
+    }
+
+    .card-back p {
+        font-size: 0.96em;
+    }
 }
 
 .section li::before {
