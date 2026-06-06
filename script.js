@@ -9,6 +9,7 @@ const translations = {
         visionText: "To be the best football club in Mara Region and one of the leading clubs in nurturing youth talents in the country, from district to regional to national level.",
         valuesTitle: "Our Values",
         values: ["Discipline", "Unity", "Respect", "Commitment", "Patriotism"],
+        valuesDetail: "Learn more about {value}.",
         sloganTitle: "Our Slogan",
         sloganText: "We are United by Football",
         founderTitle: "Our Founder",
@@ -30,6 +31,7 @@ const translations = {
         visionText: "Kuwa klabu bora ya mpira wa miguu katika Mkoa wa Mara na moja ya klabu innazoongoza kwa kukuza vipaji vya vijana nchini Wilayani, Mkoni mpaka kitaifa.",
         valuesTitle: "Maadili Yetu",
         values: ["Nidhamu", "Umoja", "Heshima", "Kujituma", "Uzalendo"],
+        valuesDetail: "Jifunze zaidi kuhusu {value}.",
         sloganTitle: "Slogani Yetu",
         sloganText: "We are United by Football",
         founderTitle: "Mwanzilishi Wetu",
@@ -103,15 +105,17 @@ window.addEventListener('scroll', () => {
     }
 });
 
-// Interactive values list
-document.querySelectorAll('#values-list li').forEach((li, index) => {
-    li.addEventListener('click', () => {
-        li.style.transform = 'scale(1.1)';
-        setTimeout(() => {
-            li.style.transform = 'scale(1)';
-        }, 200);
-    });
-});
+// Values accordion builder + toggle behavior (accessible + touch-friendly)
+function toggleValueItem(item, btn, content) {
+    const isOpen = item.classList.toggle('open');
+    btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    if (isOpen) {
+        // set explicit maxHeight to allow transition
+        content.style.maxHeight = content.scrollHeight + 'px';
+    } else {
+        content.style.maxHeight = null;
+    }
+}
 
 // Typing effect for hero subtitle (optional enhancement)
 function typeWriter(element, text, speed = 50) {
@@ -148,16 +152,39 @@ function updateLanguage() {
     document.getElementById('values-title').textContent = lang.valuesTitle;
     const valuesList = document.getElementById('values-list');
     valuesList.innerHTML = '';
-    lang.values.forEach(value => {
-        const li = document.createElement('li');
-        li.textContent = value;
-        li.addEventListener('click', () => {
-            li.style.transform = 'scale(1.1)';
-            setTimeout(() => {
-                li.style.transform = 'scale(1)';
-            }, 200);
+    lang.values.forEach((value, i) => {
+        const item = document.createElement('div');
+        item.className = 'value-item';
+
+        const btn = document.createElement('button');
+        btn.className = 'value-toggle';
+        btn.type = 'button';
+        btn.id = `value-toggle-${i}`;
+        btn.setAttribute('aria-expanded', 'false');
+        btn.setAttribute('aria-controls', `value-content-${i}`);
+        btn.textContent = value;
+
+        const content = document.createElement('div');
+        content.className = 'value-content';
+        content.id = `value-content-${i}`;
+        content.setAttribute('role', 'region');
+        content.setAttribute('aria-labelledby', btn.id);
+        const p = document.createElement('p');
+        const detailText = (lang.valuesDetail || 'Learn more about {value}.').replace('{value}', value);
+        p.textContent = detailText;
+        content.appendChild(p);
+
+        btn.addEventListener('click', () => toggleValueItem(item, btn, content));
+        btn.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                btn.click();
+            }
         });
-        valuesList.appendChild(li);
+
+        item.appendChild(btn);
+        item.appendChild(content);
+        valuesList.appendChild(item);
     });
     document.getElementById('slogan-title').textContent = lang.sloganTitle;
     document.getElementById('slogan-text').textContent = lang.sloganText;
@@ -171,6 +198,9 @@ document.getElementById('lang-toggle').addEventListener('click', () => {
     currentLang = currentLang === 'en' ? 'sw' : 'en';
     updateLanguage();
 });
+
+// Initialize translated UI and values accordion on first load
+updateLanguage();
 
 // Scroll to top button
 const scrollToTopBtn = document.getElementById('scroll-to-top');
