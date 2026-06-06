@@ -36,6 +36,24 @@ body {
     gap: 10px;
 }
 
+/* Brand logo (top-left) */
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.nav-logo {
+    width: 52px;
+    height: auto;
+    display: block;
+    border-radius: 8px;
+}
+
+@media (max-width: 768px) {
+    .nav-logo { width: 42px; }
+}
+
 #nav-club-name {
     margin: 0;
     font-size: 1.3em;
