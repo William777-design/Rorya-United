@@ -373,6 +373,10 @@ body {
     padding: 120px 0;
 }
 
+#about-text{
+    color: #d1e3fb;
+}
+
 .about-video {
     position: absolute;
     inset: 0;
@@ -1255,7 +1259,7 @@ footer::before {
         margin: 10px auto;
         width: 200px;
     }
-}
+
 
 @media (max-width: 480px) {
     .container {
