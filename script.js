@@ -245,7 +245,10 @@ function updateLanguage() {
     document.getElementById('gallery-title').textContent = lang.galleryTitle;
     document.getElementById('contact-title').textContent = lang.contactTitle;
     document.getElementById('contact-text').textContent = lang.contactText;
-    document.getElementById('contact-submit').textContent = lang.contactSubmit;
+    const contactSubmitButton = document.getElementById('contact-submit');
+    if (contactSubmitButton) {
+        contactSubmitButton.textContent = lang.contactSubmit;
+    }
     document.getElementById('contact-success').textContent = '';
     document.getElementById('footer-text').textContent = lang.footerText;
 }
