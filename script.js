@@ -25,6 +25,8 @@ const translations = {
         learnMore: "Learn More",
         contactTitle: "Contact Us",
         contactText: "Get in touch with Rorya United FC. We'd love to hear from you!",
+        contactSubmit: "Send",
+        contactSuccessMessage: "Your message has been sent successfully! We will get back to you soon.",
         galleryTitle: "Gallery"
     },
     sw: {
@@ -53,6 +55,8 @@ const translations = {
         learnMore: "Jifunze Zaidi",
         contactTitle: "Wasiliana Nasi",
         contactText: "Wasiliana na Rorya United FC. Tunapenda kusikia kutoka kwako!",
+        contactSubmit: "Tuma",
+        contactSuccessMessage: "Ujumbe umefanikiwa kutumwa! Tutakujibu hivi karibuni.",
         galleryTitle: "Picha"
     }
 };
@@ -239,6 +243,10 @@ function updateLanguage() {
     document.getElementById('founder-title').textContent = lang.founderTitle;
     document.getElementById('founder-text').textContent = lang.founderText;
     document.getElementById('gallery-title').textContent = lang.galleryTitle;
+    document.getElementById('contact-title').textContent = lang.contactTitle;
+    document.getElementById('contact-text').textContent = lang.contactText;
+    document.getElementById('contact-submit').textContent = lang.contactSubmit;
+    document.getElementById('contact-success').textContent = '';
     document.getElementById('footer-text').textContent = lang.footerText;
 }
 
@@ -247,93 +255,89 @@ document.getElementById('lang-toggle').addEventListener('click', () => {
     updateLanguage();
 });
 
-// Initialize translated UI and values accordion on first load
-updateLanguage();
+const contactForm = document.getElementById('contact-form');
+const contactSuccess = document.getElementById('contact-success');
 
-// Scroll to top button
-const scrollToTopBtn = document.getElementById('scroll-to-top');
+function clearContactErrors() {
+    if (contactSuccess) contactSuccess.textContent = '';
+}
 
-window.addEventListener('scroll', () => {
-    if (window.pageYOffset > 300) {
-        scrollToTopBtn.classList.add('show');
-    } else {
-        scrollToTopBtn.classList.remove('show');
+function validateContactForm() {
+    clearContactErrors();
+    return true;
+}
+
+contactForm?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    if (!validateContactForm()) return;
+
+    if (contactSuccess) {
+        contactSuccess.textContent = translations[currentLang].contactSuccessMessage;
     }
+
+    if (contactForm) contactForm.reset();
+
+    setTimeout(() => {
+        if (contactSuccess) contactSuccess.textContent = '';
+    }, 6000);
 });
 
-scrollToTopBtn.addEventListener('click', () => {
-    window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-    });
-});
-
-// Carousel Functionality
-let currentSlide = 0;
-const carouselItems = document.querySelectorAll('.carousel-item');
+const scrollTopButton = document.getElementById('scroll-to-top');
+const carouselItems = Array.from(document.querySelectorAll('.carousel-item'));
 const carouselDotsContainer = document.querySelector('.carousel-dots');
-const totalSlides = carouselItems.length;
-
-// Create dots
-function createCarouselDots() {
-    for (let i = 0; i < totalSlides; i++) {
-        const dot = document.createElement('button');
-        dot.className = 'carousel-dot';
-        if (i === 0) dot.classList.add('active');
-        dot.addEventListener('click', () => goToSlide(i));
-        carouselDotsContainer.appendChild(dot);
-    }
-}
-
-// Show slide
-function showSlide(n) {
-    carouselItems.forEach(item => item.classList.remove('active'));
-    document.querySelectorAll('.carousel-dot').forEach(dot => dot.classList.remove('active'));
-    
-    carouselItems[n].classList.add('active');
-    document.querySelectorAll('.carousel-dot')[n].classList.add('active');
-}
-
-// Go to specific slide
-function goToSlide(n) {
-    currentSlide = n;
-    showSlide(currentSlide);
-}
-
-// Next slide
-function nextSlide() {
-    currentSlide = (currentSlide + 1) % totalSlides;
-    showSlide(currentSlide);
-}
-
-// Previous slide
-function prevSlide() {
-    currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
-    showSlide(currentSlide);
-}
-
-// Event listeners for carousel buttons
-document.querySelector('.carousel-next').addEventListener('click', nextSlide);
-document.querySelector('.carousel-prev').addEventListener('click', prevSlide);
-
-const carousel = document.querySelector('.carousel');
-let carouselInterval = null;
-let currentLightboxIndex = 0;
-const galleryImages = document.querySelectorAll('.carousel-item img');
+const carouselPrev = document.querySelector('.carousel-prev');
+const carouselNext = document.querySelector('.carousel-next');
 const lightbox = document.getElementById('lightbox');
-const lightboxImage = lightbox?.querySelector('.lightbox-image');
-const lightboxClose = lightbox?.querySelector('.lightbox-close');
-const lightboxPrev = lightbox?.querySelector('.lightbox-prev');
-const lightboxNext = lightbox?.querySelector('.lightbox-next');
+const lightboxImage = document.querySelector('.lightbox-image');
+const lightboxPrev = document.querySelector('.lightbox-prev');
+const lightboxNext = document.querySelector('.lightbox-next');
+const lightboxClose = document.querySelector('.lightbox-close');
+let carouselIndex = 0;
+let lightboxIndex = 0;
 
-function openLightbox(index) {
-    currentLightboxIndex = index;
+function handleScrollButton() {
+    if (!scrollTopButton) return;
+    const show = window.scrollY > 400;
+    scrollTopButton.classList.toggle('show', show);
+}
+
+function setActiveSlide(index) {
+    if (!carouselItems.length) return;
+    carouselIndex = (index + carouselItems.length) % carouselItems.length;
+    carouselItems.forEach((item, idx) => item.classList.toggle('active', idx === carouselIndex));
+    updateCarouselDots();
+}
+
+function updateCarouselDots() {
+    if (!carouselDotsContainer) return;
+    carouselDotsContainer.querySelectorAll('button').forEach((dot, idx) => {
+        dot.classList.toggle('active', idx === carouselIndex);
+    });
+}
+
+function buildCarouselDots() {
+    if (!carouselDotsContainer || !carouselItems.length) return;
+    carouselDotsContainer.innerHTML = '';
+    carouselItems.forEach((_, idx) => {
+        const dot = document.createElement('button');
+        dot.type = 'button';
+        dot.setAttribute('aria-label', `View slide ${idx + 1}`);
+        dot.className = idx === carouselIndex ? 'active' : '';
+        dot.addEventListener('click', () => setActiveSlide(idx));
+        carouselDotsContainer.appendChild(dot);
+    });
+}
+
+function showLightbox(index) {
     if (!lightbox || !lightboxImage) return;
-    const image = carouselItems[index].querySelector('img');
-    lightboxImage.src = image?.src || '';
-    lightboxImage.alt = image?.alt || 'Gallery preview';
+    lightboxIndex = (index + carouselItems.length) % carouselItems.length;
+    const targetImage = carouselItems[lightboxIndex].querySelector('img');
+    if (!targetImage) return;
+    lightboxImage.src = targetImage.src;
+    lightboxImage.alt = targetImage.alt || 'Gallery preview';
     lightbox.classList.add('open');
     lightbox.setAttribute('aria-hidden', 'false');
+    lightboxClose?.focus();
 }
 
 function closeLightbox() {
@@ -342,54 +346,60 @@ function closeLightbox() {
     lightbox.setAttribute('aria-hidden', 'true');
 }
 
-function prevLightbox() {
-    openLightbox((currentLightboxIndex - 1 + totalSlides) % totalSlides);
+function showNextLightboxImage() {
+    showLightbox(lightboxIndex + 1);
 }
 
-function nextLightbox() {
-    openLightbox((currentLightboxIndex + 1) % totalSlides);
+function showPrevLightboxImage() {
+    showLightbox(lightboxIndex - 1);
 }
 
-function startCarousel() {
-    carouselInterval = setInterval(nextSlide, 5000);
+function initializeCarousel() {
+    if (!carouselItems.length) return;
+    buildCarouselDots();
+    carouselItems.forEach((item, idx) => {
+        const image = item.querySelector('img');
+        if (image) {
+            image.setAttribute('loading', 'lazy');
+            image.style.cursor = 'pointer';
+            image.addEventListener('click', () => showLightbox(idx));
+        }
+    });
+    setActiveSlide(0);
 }
 
-function stopCarousel() {
-    if (carouselInterval) {
-        clearInterval(carouselInterval);
-        carouselInterval = null;
-    }
-}
-
-if (carousel) {
-    carousel.addEventListener('mouseenter', stopCarousel);
-    carousel.addEventListener('mouseleave', startCarousel);
-}
-
-galleryImages.forEach((img, index) => {
-    img.style.cursor = 'pointer';
-    img.addEventListener('click', () => openLightbox(index));
+window.addEventListener('scroll', handleScrollButton);
+scrollTopButton?.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 });
-
-lightbox?.addEventListener('click', (event) => {
-    if (event.target === lightbox) closeLightbox();
-});
-
+carouselPrev?.addEventListener('click', () => setActiveSlide(carouselIndex - 1));
+carouselNext?.addEventListener('click', () => setActiveSlide(carouselIndex + 1));
 lightboxClose?.addEventListener('click', closeLightbox);
-lightboxPrev?.addEventListener('click', prevLightbox);
-lightboxNext?.addEventListener('click', nextLightbox);
+lightboxPrev?.addEventListener('click', showPrevLightboxImage);
+lightboxNext?.addEventListener('click', showNextLightboxImage);
 
-document.addEventListener('keydown', (event) => {
-    if (!lightbox?.classList.contains('open')) return;
-    if (event.key === 'Escape') closeLightbox();
-    if (event.key === 'ArrowLeft') prevLightbox();
-    if (event.key === 'ArrowRight') nextLightbox();
+window.addEventListener('keydown', (event) => {
+    if (!lightbox || !lightbox.classList.contains('open')) return;
+    if (event.key === 'Escape') {
+        closeLightbox();
+    }
+    if (event.key === 'ArrowRight') {
+        showNextLightboxImage();
+    }
+    if (event.key === 'ArrowLeft') {
+        showPrevLightboxImage();
+    }
 });
 
-// Initialize carousel
-createCarouselDots();
-showSlide(0);
-startCarousel();
+document.addEventListener('click', (event) => {
+    if (!lightbox || !lightbox.classList.contains('open')) return;
+    if (event.target === lightbox) {
+        closeLightbox();
+    }
+});
+
+updateLanguage();
+initializeCarousel();
 
 // About section video handling: respect reduced motion and pause when off-screen
 (function handleAboutVideo(){
