@@ -245,44 +245,12 @@ function updateLanguage() {
     document.getElementById('gallery-title').textContent = lang.galleryTitle;
     document.getElementById('contact-title').textContent = lang.contactTitle;
     document.getElementById('contact-text').textContent = lang.contactText;
-    const contactSubmitButton = document.getElementById('contact-submit');
-    if (contactSubmitButton) {
-        contactSubmitButton.textContent = lang.contactSubmit;
-    }
-    document.getElementById('contact-success').textContent = '';
     document.getElementById('footer-text').textContent = lang.footerText;
 }
 
 document.getElementById('lang-toggle').addEventListener('click', () => {
     currentLang = currentLang === 'en' ? 'sw' : 'en';
     updateLanguage();
-});
-
-const contactForm = document.getElementById('contact-form');
-const contactSuccess = document.getElementById('contact-success');
-
-function clearContactErrors() {
-    if (contactSuccess) contactSuccess.textContent = '';
-}
-
-function validateContactForm() {
-    clearContactErrors();
-    return true;
-}
-
-contactForm?.addEventListener('submit', (event) => {
-    event.preventDefault();
-    if (!validateContactForm()) return;
-
-    if (contactSuccess) {
-        contactSuccess.textContent = translations[currentLang].contactSuccessMessage;
-    }
-
-    if (contactForm) contactForm.reset();
-
-    setTimeout(() => {
-        if (contactSuccess) contactSuccess.textContent = '';
-    }, 6000);
 });
 
 const scrollTopButton = document.getElementById('scroll-to-top');
