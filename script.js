@@ -401,20 +401,51 @@ document.addEventListener('click', (event) => {
 updateLanguage();
 initializeCarousel();
 
-// About section video handling: respect reduced motion and pause when off-screen
+// About section video handling: respect reduced motion, data-saver, and provide tap-to-play fallback
 (function handleAboutVideo(){
     const aboutVideo = document.getElementById('about-video');
     if (!aboutVideo) return;
 
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReduced) {
+    const saveData = navigator.connection && navigator.connection.saveData;
+    const fallbackContainer = document.getElementById('video-fallback-container');
+
+    if (prefersReduced || saveData) {
         aboutVideo.pause();
-        aboutVideo.removeAttribute('autoplay');
+        aboutVideo.classList.add('video-hidden');
+        if (fallbackContainer) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'video-fallback-btn';
+            btn.textContent = saveData ? 'Data saver on — Tap to play background' : 'Enable background video';
+            btn.addEventListener('click', () => {
+                aboutVideo.classList.remove('video-hidden');
+                aboutVideo.play().then(() => btn.remove()).catch(() => {});
+            });
+            fallbackContainer.appendChild(btn);
+        }
         return;
     }
 
     aboutVideo.muted = true;
-    aboutVideo.play().catch(() => {});
+    aboutVideo.setAttribute('playsinline', '');
+    aboutVideo.playsInline = true;
+
+    const playPromise = aboutVideo.play();
+    if (playPromise !== undefined) {
+        playPromise.catch(() => {
+            if (fallbackContainer) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'video-fallback-btn';
+                btn.textContent = 'Tap to enable background';
+                btn.addEventListener('click', () => {
+                    aboutVideo.play().then(() => btn.remove()).catch(() => {});
+                });
+                fallbackContainer.appendChild(btn);
+            }
+        });
+    }
 
     const vidObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
