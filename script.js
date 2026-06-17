@@ -183,14 +183,22 @@ async function initializePage() {
 window.addEventListener('load', initializePage)
 
 async function fetchSanityData(query, params = {}) {
-    const url = new URL(`https://${SANITY_PROJECT_ID}.api.sanity.io/v${SANITY_API_VERSION}/data/query/${SANITY_DATASET}`)
+    const url = new URL(`https://77yk21r2.api.sanity.io/v2021-10-21/data/query/production?query=*[_type=="landingPage"]`)
     url.searchParams.set('query', query)
     Object.entries(params).forEach(([key, value]) => {
         url.searchParams.set(`$${key}`, value)
     })
 
-    const response = await fetch(url)
+    const response = await fetch(url, { mode: 'cors' })
+    if (!response.ok) {
+        throw new Error(`Sanity query failed: ${response.status} ${response.statusText}`)
+    }
+
     const json = await response.json()
+    if (json.error) {
+        throw new Error(json.error.message || 'Sanity returned an error')
+    }
+
     return json.result
 }
 
@@ -214,13 +222,20 @@ async function fetchLandingPageContent() {
     let params = {}
 
     if (slug) {
-        query = `*[_type == \"landingPage\" && slug.current == $slug][0]{title, heroTitle, heroSubtitle, heroImage{asset->{url}}, intro, ctaText, ctaUrl, seoTitle, seoDescription, sections[]{sectionTitle, sectionText, sectionImage{asset->{url}}}}`
+        query = `*[_type == \"landingPage\" && slug.current == $slug][0]{title: Roryaunited, heroTitle, heroSubtitle, heroImage{asset->{url}}, intro, ctaText, ctaUrl, seoTitle, seoDescription, ourVision[]{..., children[]{text}}, visionImage{asset->{url}}, sections[]{sectionTitle, sectionText, sectionImage{asset->{url}}}}`
         params = {slug}
     } else {
-        query = `*[_type == \"landingPage\"] | order(_createdAt desc)[0]{title, heroTitle, heroSubtitle, heroImage{asset->{url}}, intro, ctaText, ctaUrl, seoTitle, seoDescription, sections[]{sectionTitle, sectionText, sectionImage{asset->{url}}}}`
+        query = `*[_type == \"landingPage\"] | order(_createdAt desc)[0]{title: Roryaunited, heroTitle, heroSubtitle, heroImage{asset->{url}}, intro, ctaText, ctaUrl, seoTitle, seoDescription, ourVision[]{..., children[]{text}}, visionImage{asset->{url}}, sections[]{sectionTitle, sectionText, sectionImage{asset->{url}}}}`
     }
 
     return fetchSanityData(query, params)
+}
+
+function portableTextToPlainText(blocks = []) {
+    return (blocks || [])
+        .filter(block => block && block._type === 'block' && Array.isArray(block.children))
+        .map(block => block.children.map(child => child.text || '').join(''))
+        .join('\n\n')
 }
 
 function renderCmsSections(sections) {
@@ -276,6 +291,10 @@ function applyLandingPageContent(page) {
 
     if (Array.isArray(page.sections) && page.sections.length > 0) {
         renderCmsSections(page.sections)
+    }
+
+    if (Array.isArray(page.ourVision) && page.ourVision.length > 0) {
+        document.getElementById('vision-text').textContent = portableTextToPlainText(page.ourVision)
     }
 
     if (page.heroImage?.asset?.url) {

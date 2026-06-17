@@ -2,12 +2,12 @@ import {defineType, defineField} from 'sanity'
 
 export default defineType({
   name: 'landingPage',
-  title: 'Landing Page',
+  title: 'Rorya United',
   type: 'document',
   fields: [
     defineField({
       name: 'Roryaunited',
-      title: 'Rorya united',
+      title: 'name',
       type: 'string',
       validation: (Rule) => Rule.required(),
     }),
@@ -16,7 +16,7 @@ export default defineType({
       title: 'Slug',
       type: 'slug',
       options: {
-        source: 'title',
+        source: 'Roryaunited',
         maxLength: 96,
       },
       validation: (Rule) => Rule.required(),
@@ -85,6 +85,22 @@ export default defineType({
       ],
     }), 
     defineField({
+      name: 'ourVision',
+      title: 'Our Vision',
+      type: 'array',
+      of: [
+        {
+          type: 'block',
+        },
+      ],
+    }),
+    defineField({
+      name: 'visionImage',
+      title: 'Vision Image',
+      type: 'image',
+      options: {hotspot: true},
+    }),
+    defineField({
       name: 'seoTitle',
       title: 'SEO Title',
       type: 'string',
@@ -97,7 +113,7 @@ export default defineType({
   ],
   preview: {
     select: {
-      title: 'title',
+      title: 'Roryaunited',
       subtitle: 'slug.current',
     },
   },

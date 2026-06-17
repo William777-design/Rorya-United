@@ -1,3 +1,4 @@
 import landingPage from './landingPage'
+import news from './news'
 
-export const schemaTypes = [landingPage]
+export const schemaTypes = [landingPage, news]
