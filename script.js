@@ -1,3 +1,7 @@
+const SANITY_PROJECT_ID = '77yk21r2'
+const SANITY_DATASET = 'production'
+const SANITY_API_VERSION = '2024-10-02'
+
 const translations = {
     en: {
         clubName: "Rorya United Football Club (RU FC)",
@@ -160,25 +164,140 @@ function typeWriter(element, text, speed = 50) {
 }
 
 // Initialize typing effect on load
-window.addEventListener('load', () => {
-    const subtitle = document.getElementById('hero-subtitle');
-    typeWriter(subtitle, subtitle.textContent, 30);
-});
+async function initializePage() {
+    updateLanguage()
+
+    const landingPage = await fetchLandingPageContent().catch((error) => {
+        console.warn('Sanity landing page fetch failed:', error)
+        return null
+    })
+
+    if (landingPage) {
+        applyLandingPageContent(landingPage)
+    }
+
+    const subtitle = document.getElementById('hero-subtitle')
+    typeWriter(subtitle, subtitle.textContent, 30)
+}
+
+window.addEventListener('load', initializePage)
+
+async function fetchSanityData(query, params = {}) {
+    const url = new URL(`https://${SANITY_PROJECT_ID}.api.sanity.io/v${SANITY_API_VERSION}/data/query/${SANITY_DATASET}`)
+    url.searchParams.set('query', query)
+    Object.entries(params).forEach(([key, value]) => {
+        url.searchParams.set(`$${key}`, value)
+    })
+
+    const response = await fetch(url)
+    const json = await response.json()
+    return json.result
+}
+
+function getRouteSlug() {
+    const url = new URL(window.location.href)
+    const querySlug = url.searchParams.get('slug')
+    if (querySlug) return querySlug
+
+    const pathname = url.pathname.replace(/\/$/, '')
+    const pathSegment = pathname.split('/').pop()
+    if (pathSegment && pathSegment !== 'index.html' && pathSegment !== '') {
+        return pathSegment
+    }
+
+    return null
+}
+
+async function fetchLandingPageContent() {
+    const slug = getRouteSlug()
+    let query
+    let params = {}
+
+    if (slug) {
+        query = `*[_type == \"landingPage\" && slug.current == $slug][0]{title, heroTitle, heroSubtitle, heroImage{asset->{url}}, intro, ctaText, ctaUrl, seoTitle, seoDescription, sections[]{sectionTitle, sectionText, sectionImage{asset->{url}}}}`
+        params = {slug}
+    } else {
+        query = `*[_type == \"landingPage\"] | order(_createdAt desc)[0]{title, heroTitle, heroSubtitle, heroImage{asset->{url}}, intro, ctaText, ctaUrl, seoTitle, seoDescription, sections[]{sectionTitle, sectionText, sectionImage{asset->{url}}}}`
+    }
+
+    return fetchSanityData(query, params)
+}
+
+function renderCmsSections(sections) {
+    const container = document.getElementById('cms-sections-container')
+    container.innerHTML = ''
+    if (!Array.isArray(sections) || sections.length === 0) {
+        container.innerHTML = '<p>No extra content is available for this page.</p>'
+        return
+    }
+
+    sections.forEach((section) => {
+        const sectionEl = document.createElement('div')
+        sectionEl.className = 'cms-section'
+
+        if (section.sectionTitle) {
+            const heading = document.createElement('h2')
+            heading.textContent = section.sectionTitle
+            sectionEl.appendChild(heading)
+        }
+
+        if (section.sectionText) {
+            const paragraph = document.createElement('p')
+            paragraph.textContent = section.sectionText
+            sectionEl.appendChild(paragraph)
+        }
+
+        if (section.sectionImage?.asset?.url) {
+            const image = document.createElement('img')
+            image.src = section.sectionImage.asset.url
+            image.alt = section.sectionTitle || 'Section image'
+            image.className = 'cms-section-image'
+            sectionEl.appendChild(image)
+        }
+
+        container.appendChild(sectionEl)
+    })
+}
+
+function applyLandingPageContent(page) {
+    if (!page) return
+
+    document.title = page.seoTitle || page.title || document.title
+    document.getElementById('club-name').textContent = page.heroTitle || document.getElementById('club-name').textContent
+    document.getElementById('hero-subtitle').textContent = page.heroSubtitle || document.getElementById('hero-subtitle').textContent
+    document.querySelector('.cta-button').href = page.ctaUrl || '#about'
+    if (page.ctaText) {
+        document.querySelector('.cta-button').textContent = page.ctaText
+    }
+
+    if (page.intro) {
+        document.getElementById('about-text').textContent = page.intro
+    }
+
+    if (Array.isArray(page.sections) && page.sections.length > 0) {
+        renderCmsSections(page.sections)
+    }
+
+    if (page.heroImage?.asset?.url) {
+        const hero = document.getElementById('hero')
+        hero.style.backgroundImage = `url(${page.heroImage.asset.url})`
+    }
+}
 
 function updateLanguage() {
-    const lang = translations[currentLang];
+    const lang = translations[currentLang]
 
-    document.getElementById('club-name').textContent = lang.clubName;
-    document.getElementById('nav-club-name').textContent = lang.navClubName;
-    document.getElementById('lang-toggle').textContent = lang.langToggle;
-    document.getElementById('hero-subtitle').textContent = lang.heroSubtitle;
-    document.querySelector('.cta-button').textContent = lang.learnMore;
-    document.getElementById('about-title').textContent = lang.aboutTitle;
-    document.getElementById('about-text').textContent = lang.aboutText;
-    document.getElementById('vision-title').textContent = lang.visionTitle;
-    document.getElementById('vision-text').textContent = lang.visionText;
-    document.getElementById('values-title').textContent = lang.valuesTitle;
-    const valuesList = document.getElementById('values-list');
+    document.getElementById('club-name').textContent = lang.clubName
+    document.getElementById('nav-club-name').textContent = lang.navClubName
+    document.getElementById('lang-toggle').textContent = lang.langToggle
+    document.getElementById('hero-subtitle').textContent = lang.heroSubtitle
+    document.querySelector('.cta-button').textContent = lang.learnMore
+    document.getElementById('about-title').textContent = lang.aboutTitle
+    document.getElementById('about-text').textContent = lang.aboutText
+    document.getElementById('vision-title').textContent = lang.visionTitle
+    document.getElementById('vision-text').textContent = lang.visionText
+    document.getElementById('values-title').textContent = lang.valuesTitle
+    const valuesList = document.getElementById('values-list')
     valuesList.innerHTML = '';
     lang.values.forEach((value, i) => {
         const item = document.createElement('div');
