@@ -192,7 +192,7 @@ async function fetchSanityData(query, params = {}) {
     const response = await fetch(url, { mode: 'cors' })
     if (!response.ok) {
         throw new Error(`Sanity query failed: ${response.status} ${response.statusText}`)
-    }
+    } 
 
     const json = await response.json()
     if (json.error) {
