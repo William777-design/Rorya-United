@@ -1,6 +1,4 @@
-const SANITY_PROJECT_ID = '77yk21r2'
-const SANITY_DATASET = 'production'
-const SANITY_API_VERSION = '2024-10-02'
+import { client } from './sanityClient.js'
 
 const translations = {
     en: {
@@ -167,40 +165,23 @@ function typeWriter(element, text, speed = 50) {
 async function initializePage() {
     updateLanguage()
 
-    const landingPage = await fetchLandingPageContent().catch((error) => {
+    try {
+        const landingPage = await fetchLandingPageContent()
+        if (landingPage) {
+            applyLandingPageContent(landingPage)
+        }
+    } catch (error) {
         console.warn('Sanity landing page fetch failed:', error)
-        return null
-    })
-
-    if (landingPage) {
-        applyLandingPageContent(landingPage)
     }
 
     const subtitle = document.getElementById('hero-subtitle')
-    typeWriter(subtitle, subtitle.textContent, 30)
+    if (subtitle) {
+        const subtitleText = subtitle.textContent || translations[currentLang].heroSubtitle
+        typeWriter(subtitle, subtitleText, 30)
+    }
 }
 
 window.addEventListener('load', initializePage)
-
-async function fetchSanityData(query, params = {}) {
-    const url = new URL(`https://77yk21r2.api.sanity.io/v2021-10-21/data/query/production?query=*[_type=="landingPage"]`)
-    url.searchParams.set('query', query)
-    Object.entries(params).forEach(([key, value]) => {
-        url.searchParams.set(`$${key}`, value)
-    })
-
-    const response = await fetch(url, { mode: 'cors' })
-    if (!response.ok) {
-        throw new Error(`Sanity query failed: ${response.status} ${response.statusText}`)
-    } 
-
-    const json = await response.json()
-    if (json.error) {
-        throw new Error(json.error.message || 'Sanity returned an error')
-    }
-
-    return json.result
-}
 
 function getRouteSlug() {
     const url = new URL(window.location.href)
@@ -218,17 +199,37 @@ function getRouteSlug() {
 
 async function fetchLandingPageContent() {
     const slug = getRouteSlug()
-    let query
-    let params = {}
+    const query = slug
+        ? `*[_type == "landingPage" && slug.current == $slug][0]{
+            title: Roryaunited,
+            heroTitle,
+            heroSubtitle,
+            heroImage{asset->{url}},
+            intro,
+            ctaText,
+            ctaUrl,
+            seoTitle,
+            seoDescription,
+            ourVision[]{..., children[]{text}},
+            visionImage{asset->{url}},
+            sections[]{sectionTitle, sectionText, sectionImage{asset->{url}}}
+        }`
+        : `*[_type == "landingPage"] | order(_createdAt desc)[0]{
+            title: Roryaunited,
+            heroTitle,
+            heroSubtitle,
+            heroImage{asset->{url}},
+            intro,
+            ctaText,
+            ctaUrl,
+            seoTitle,
+            seoDescription,
+            ourVision[]{..., children[]{text}},
+            visionImage{asset->{url}},
+            sections[]{sectionTitle, sectionText, sectionImage{asset->{url}}}
+        }`
 
-    if (slug) {
-        query = `*[_type == \"landingPage\" && slug.current == $slug][0]{title: Roryaunited, heroTitle, heroSubtitle, heroImage{asset->{url}}, intro, ctaText, ctaUrl, seoTitle, seoDescription, ourVision[]{..., children[]{text}}, visionImage{asset->{url}}, sections[]{sectionTitle, sectionText, sectionImage{asset->{url}}}}`
-        params = {slug}
-    } else {
-        query = `*[_type == \"landingPage\"] | order(_createdAt desc)[0]{title: Roryaunited, heroTitle, heroSubtitle, heroImage{asset->{url}}, intro, ctaText, ctaUrl, seoTitle, seoDescription, ourVision[]{..., children[]{text}}, visionImage{asset->{url}}, sections[]{sectionTitle, sectionText, sectionImage{asset->{url}}}}`
-    }
-
-    return fetchSanityData(query, params)
+    return client.fetch(query, slug ? { slug } : {})
 }
 
 function portableTextToPlainText(blocks = []) {
@@ -236,6 +237,14 @@ function portableTextToPlainText(blocks = []) {
         .filter(block => block && block._type === 'block' && Array.isArray(block.children))
         .map(block => block.children.map(child => child.text || '').join(''))
         .join('\n\n')
+}
+
+function setTextContent(elementId, value, fallback = '') {
+    const element = document.getElementById(elementId)
+    if (!element) return
+
+    const text = value && String(value).trim() ? value : fallback
+    element.textContent = text
 }
 
 function renderCmsSections(sections) {
@@ -278,28 +287,33 @@ function applyLandingPageContent(page) {
     if (!page) return
 
     document.title = page.seoTitle || page.title || document.title
-    document.getElementById('club-name').textContent = page.heroTitle || document.getElementById('club-name').textContent
-    document.getElementById('hero-subtitle').textContent = page.heroSubtitle || document.getElementById('hero-subtitle').textContent
-    document.querySelector('.cta-button').href = page.ctaUrl || '#about'
-    if (page.ctaText) {
-        document.querySelector('.cta-button').textContent = page.ctaText
+
+    setTextContent('club-name', page.heroTitle, translations[currentLang].clubName)
+    setTextContent('hero-subtitle', page.heroSubtitle, translations[currentLang].heroSubtitle)
+
+    const ctaButton = document.querySelector('.cta-button')
+    if (ctaButton) {
+        ctaButton.href = page.ctaUrl || '#about'
+        if (page.ctaText) {
+            ctaButton.textContent = page.ctaText
+        }
     }
 
-    if (page.intro) {
-        document.getElementById('about-text').textContent = page.intro
-    }
+    setTextContent('about-text', page.intro, translations[currentLang].aboutText)
 
     if (Array.isArray(page.sections) && page.sections.length > 0) {
         renderCmsSections(page.sections)
     }
 
     if (Array.isArray(page.ourVision) && page.ourVision.length > 0) {
-        document.getElementById('vision-text').textContent = portableTextToPlainText(page.ourVision)
+        setTextContent('vision-text', portableTextToPlainText(page.ourVision), translations[currentLang].visionText)
     }
 
     if (page.heroImage?.asset?.url) {
         const hero = document.getElementById('hero')
-        hero.style.backgroundImage = `url(${page.heroImage.asset.url})`
+        if (hero) {
+            hero.style.backgroundImage = `url(${page.heroImage.asset.url})`
+        }
     }
 }
 
@@ -569,3 +583,5 @@ initializeCarousel();
     const aboutSection = document.getElementById('about');
     if (aboutSection) vidObserver.observe(aboutSection);
 })();
+
+
