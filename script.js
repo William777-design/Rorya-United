@@ -288,7 +288,7 @@ function applyLandingPageContent(page) {
 
     document.title = page.seoTitle || page.title || document.title
 
-    setTextContent('club-name', page.heroTitle, translations[currentLang].clubName)
+    setTextContent('team-name', page.heroTitle, translations[currentLang].clubName)
     setTextContent('hero-subtitle', page.heroSubtitle, translations[currentLang].heroSubtitle)
 
     const ctaButton = document.querySelector('.cta-button')
@@ -320,7 +320,7 @@ function applyLandingPageContent(page) {
 function updateLanguage() {
     const lang = translations[currentLang]
 
-    document.getElementById('club-name').textContent = lang.clubName
+    document.getElementById('team-name').textContent = lang.clubName
     document.getElementById('nav-club-name').textContent = lang.navClubName
     document.getElementById('lang-toggle').textContent = lang.langToggle
     document.getElementById('hero-subtitle').textContent = lang.heroSubtitle
