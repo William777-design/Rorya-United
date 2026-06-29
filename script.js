@@ -64,6 +64,7 @@ const translations = {
 };
 
 let currentLang = 'en';
+let currentPageContent = null;
 
 // Hamburger Menu Toggle
 const hamburger = document.getElementById('hamburger');
@@ -168,6 +169,7 @@ async function initializePage() {
     try {
         const landingPage = await fetchLandingPageContent()
         if (landingPage) {
+            currentPageContent = landingPage
             applyLandingPageContent(landingPage)
         }
     } catch (error) {
@@ -201,32 +203,62 @@ async function fetchLandingPageContent() {
     const slug = getRouteSlug()
     const query = slug
         ? `*[_type == "landingPage" && slug.current == $slug][0]{
-            title: Roryaunited,
+            clubName: coalesce(clubName, Roryaunited),
+            navTitle: coalesce(navTitle, clubName, Roryaunited),
             heroTitle,
             heroSubtitle,
             heroImage{asset->{url}},
-            intro,
             ctaText,
             ctaUrl,
-            seoTitle,
-            seoDescription,
+            aboutTitle,
+            aboutText,
+            aboutImage{asset->{url}},
+            visionTitle,
+            visionText,
             ourVision[]{..., children[]{text}},
             visionImage{asset->{url}},
-            sections[]{sectionTitle, sectionText, sectionImage{asset->{url}}}
+            valuesTitle,
+            values[]{valueTitle, valueDetail},
+            sloganTitle,
+            sloganText,
+            founderTitle,
+            founderText,
+            galleryTitle,
+            contactTitle,
+            contactText,
+            footerText,
+            sections[]{sectionTitle, sectionText, sectionImage{asset->{url}}},
+            seoTitle,
+            seoDescription
         }`
         : `*[_type == "landingPage"] | order(_createdAt desc)[0]{
-            title: Roryaunited,
+            clubName: coalesce(clubName, Roryaunited),
+            navTitle: coalesce(navTitle, clubName, Roryaunited),
             heroTitle,
             heroSubtitle,
             heroImage{asset->{url}},
-            intro,
             ctaText,
             ctaUrl,
-            seoTitle,
-            seoDescription,
+            aboutTitle,
+            aboutText,
+            aboutImage{asset->{url}},
+            visionTitle,
+            visionText,
             ourVision[]{..., children[]{text}},
             visionImage{asset->{url}},
-            sections[]{sectionTitle, sectionText, sectionImage{asset->{url}}}
+            valuesTitle,
+            values[]{valueTitle, valueDetail},
+            sloganTitle,
+            sloganText,
+            founderTitle,
+            founderText,
+            galleryTitle,
+            contactTitle,
+            contactText,
+            footerText,
+            sections[]{sectionTitle, sectionText, sectionImage{asset->{url}}},
+            seoTitle,
+            seoDescription
         }`
 
     return client.fetch(query, slug ? { slug } : {})
@@ -245,6 +277,102 @@ function setTextContent(elementId, value, fallback = '') {
 
     const text = value && String(value).trim() ? value : fallback
     element.textContent = text
+}
+
+function normalizeValues(values = [], fallbackValues = [], fallbackDetails = []) {
+    const toValueItem = (value, detail = '') => {
+        if (typeof value === 'string') {
+            return { title: value, detail }
+        }
+
+        if (value && typeof value === 'object') {
+            return {
+                title: value.valueTitle || value.title || value.label || '',
+                detail: value.valueDetail || value.detail || value.description || detail,
+            }
+        }
+
+        return null
+    }
+
+    if (Array.isArray(values) && values.length > 0) {
+        return values
+            .map((value, index) => {
+                const detail = typeof value === 'object' && value ? value.valueDetail || value.detail || value.description || '' : ''
+                return toValueItem(value, detail || fallbackDetails[index] || '')
+            })
+            .filter((item) => item && item.title)
+    }
+
+    return (Array.isArray(fallbackValues) ? fallbackValues : [])
+        .map((value, index) => toValueItem(value, fallbackDetails[index] || ''))
+        .filter((item) => item && item.title)
+}
+
+function renderValues(values = [], fallbackValues = [], fallbackDetails = []) {
+    const valuesList = document.getElementById('values-list')
+    if (!valuesList) return
+
+    const source = normalizeValues(values, fallbackValues, fallbackDetails)
+    valuesList.innerHTML = ''
+
+    source.forEach((value, i) => {
+        const item = document.createElement('div')
+        item.className = 'value-item'
+
+        const cardInner = document.createElement('div')
+        cardInner.className = 'card-inner'
+
+        const cardFront = document.createElement('button')
+        cardFront.className = 'card-face card-front'
+        cardFront.type = 'button'
+        cardFront.id = `value-toggle-${i}`
+        cardFront.setAttribute('aria-expanded', 'false')
+        cardFront.setAttribute('aria-controls', `value-content-${i}`)
+
+        const title = document.createElement('span')
+        title.className = 'card-title'
+        title.textContent = value.title
+
+        const hint = document.createElement('span')
+        hint.className = 'card-hint'
+        hint.textContent = currentLang === 'sw' ? 'Gonga ili kubadilisha' : 'Tap to flip'
+
+        cardFront.appendChild(title)
+        cardFront.appendChild(hint)
+
+        const cardBack = document.createElement('div')
+        cardBack.className = 'card-face card-back'
+        cardBack.id = `value-content-${i}`
+        cardBack.setAttribute('role', 'button')
+        cardBack.setAttribute('aria-label', currentLang === 'sw' ? 'Bonyeza ili kurudi nyuma' : 'Tap to flip back')
+        cardBack.tabIndex = 0
+
+        const p = document.createElement('p')
+        p.textContent = value.detail || ''
+        cardBack.appendChild(p)
+
+        cardFront.addEventListener('click', () => toggleValueItem(item, cardFront))
+        cardFront.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                cardFront.click()
+            }
+        })
+
+        cardBack.addEventListener('click', () => toggleValueItem(item, cardFront))
+        cardBack.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                toggleValueItem(item, cardFront)
+            }
+        })
+
+        cardInner.appendChild(cardFront)
+        cardInner.appendChild(cardBack)
+        item.appendChild(cardInner)
+        valuesList.appendChild(item)
+    })
 }
 
 function renderCmsSections(sections) {
@@ -286,10 +414,13 @@ function renderCmsSections(sections) {
 function applyLandingPageContent(page) {
     if (!page) return
 
-    document.title = page.seoTitle || page.title || document.title
+    const lang = translations[currentLang]
 
-    setTextContent('team-name', page.heroTitle, translations[currentLang].clubName)
-    setTextContent('hero-subtitle', page.heroSubtitle, translations[currentLang].heroSubtitle)
+    document.title = page.seoTitle || page.clubName || document.title
+
+    setTextContent('team-name', page.heroTitle || page.clubName, lang.clubName)
+    setTextContent('nav-club-name', page.navTitle || page.clubName, lang.navClubName)
+    setTextContent('hero-subtitle', page.heroSubtitle, lang.heroSubtitle)
 
     const ctaButton = document.querySelector('.cta-button')
     if (ctaButton) {
@@ -299,14 +430,29 @@ function applyLandingPageContent(page) {
         }
     }
 
-    setTextContent('about-text', page.intro, translations[currentLang].aboutText)
+    setTextContent('about-title', page.aboutTitle, lang.aboutTitle)
+    setTextContent('about-text', page.aboutText, lang.aboutText)
+    setTextContent('vision-title', page.visionTitle, lang.visionTitle)
 
-    if (Array.isArray(page.sections) && page.sections.length > 0) {
-        renderCmsSections(page.sections)
-    }
+    const visionText = page.visionText || portableTextToPlainText(page.ourVision)
+    setTextContent('vision-text', visionText, lang.visionText)
 
-    if (Array.isArray(page.ourVision) && page.ourVision.length > 0) {
-        setTextContent('vision-text', portableTextToPlainText(page.ourVision), translations[currentLang].visionText)
+    setTextContent('values-title', page.valuesTitle, lang.valuesTitle)
+    renderValues(page.values, lang.values, lang.valuesDetails)
+
+    setTextContent('slogan-title', page.sloganTitle, lang.sloganTitle)
+    setTextContent('slogan-text', page.sloganText, lang.sloganText)
+    setTextContent('founder-title', page.founderTitle, lang.founderTitle)
+    setTextContent('founder-text', page.founderText, lang.founderText)
+    setTextContent('gallery-title', page.galleryTitle, lang.galleryTitle)
+    setTextContent('contact-title', page.contactTitle, lang.contactTitle)
+    setTextContent('contact-text', page.contactText, lang.contactText)
+    setTextContent('footer-text', page.footerText, lang.footerText)
+
+    const aboutImage = document.querySelector('.club-image')
+    if (aboutImage && page.aboutImage?.asset?.url) {
+        aboutImage.src = page.aboutImage.asset.url
+        aboutImage.alt = page.aboutTitle || lang.aboutTitle
     }
 
     if (page.heroImage?.asset?.url) {
@@ -315,89 +461,66 @@ function applyLandingPageContent(page) {
             hero.style.backgroundImage = `url(${page.heroImage.asset.url})`
         }
     }
+
+    if (page.visionImage?.asset?.url) {
+        const visionSection = document.getElementById('vision')
+        if (visionSection) {
+            let visionImageEl = visionSection.querySelector('.cms-vision-image')
+            if (!visionImageEl) {
+                visionImageEl = document.createElement('img')
+                visionImageEl.className = 'cms-vision-image'
+                visionSection.appendChild(visionImageEl)
+            }
+            visionImageEl.src = page.visionImage.asset.url
+            visionImageEl.alt = page.visionTitle || lang.visionTitle
+        }
+    }
+
+    if (Array.isArray(page.sections) && page.sections.length > 0) {
+        renderCmsSections(page.sections)
+    }
 }
 
 function updateLanguage() {
     const lang = translations[currentLang]
 
-    document.getElementById('team-name').textContent = lang.clubName
-    document.getElementById('nav-club-name').textContent = lang.navClubName
-    document.getElementById('lang-toggle').textContent = lang.langToggle
-    document.getElementById('hero-subtitle').textContent = lang.heroSubtitle
-    document.querySelector('.cta-button').textContent = lang.learnMore
-    document.getElementById('about-title').textContent = lang.aboutTitle
-    document.getElementById('about-text').textContent = lang.aboutText
-    document.getElementById('vision-title').textContent = lang.visionTitle
-    document.getElementById('vision-text').textContent = lang.visionText
-    document.getElementById('values-title').textContent = lang.valuesTitle
-    const valuesList = document.getElementById('values-list')
-    valuesList.innerHTML = '';
-    lang.values.forEach((value, i) => {
-        const item = document.createElement('div');
-        item.className = 'value-item';
-
-        const cardInner = document.createElement('div');
-        cardInner.className = 'card-inner';
-
-        const cardFront = document.createElement('button');
-        cardFront.className = 'card-face card-front';
-        cardFront.type = 'button';
-        cardFront.id = `value-toggle-${i}`;
-        cardFront.setAttribute('aria-expanded', 'false');
-        cardFront.setAttribute('aria-controls', `value-content-${i}`);
-
-        const title = document.createElement('span');
-        title.className = 'card-title';
-        title.textContent = value;
-
-        const hint = document.createElement('span');
-        hint.className = 'card-hint';
-        hint.textContent = currentLang === 'sw' ? 'Gonga ili kubadilisha' : 'Tap to flip';
-
-        cardFront.appendChild(title);
-        cardFront.appendChild(hint);
-
-        const cardBack = document.createElement('div');
-        cardBack.className = 'card-face card-back';
-        cardBack.id = `value-content-${i}`;
-        cardBack.setAttribute('role', 'button');
-        cardBack.setAttribute('aria-label', currentLang === 'sw' ? 'Bonyeza ili kurudi nyuma' : 'Tap to flip back');
-        cardBack.tabIndex = 0;
-
-        const p = document.createElement('p');
-        const detailText = (lang.valuesDetails && lang.valuesDetails[i]) ? lang.valuesDetails[i] : '';
-        p.textContent = detailText;
-        cardBack.appendChild(p);
-
-        cardFront.addEventListener('click', () => toggleValueItem(item, cardFront));
-        cardFront.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                cardFront.click();
-            }
-        });
-
-        cardBack.addEventListener('click', () => toggleValueItem(item, cardFront));
-        cardBack.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                toggleValueItem(item, cardFront);
-            }
-        });
-
-        cardInner.appendChild(cardFront);
-        cardInner.appendChild(cardBack);
-        item.appendChild(cardInner);
-        valuesList.appendChild(item);
-    });
-    document.getElementById('slogan-title').textContent = lang.sloganTitle;
-    document.getElementById('slogan-text').textContent = lang.sloganText;
-    document.getElementById('founder-title').textContent = lang.founderTitle;
-    document.getElementById('founder-text').textContent = lang.founderText;
-    document.getElementById('gallery-title').textContent = lang.galleryTitle;
-    document.getElementById('contact-title').textContent = lang.contactTitle;
-    document.getElementById('contact-text').textContent = lang.contactText;
-    document.getElementById('footer-text').textContent = lang.footerText;
+    const teamName = document.getElementById('team-name')
+    if (teamName) teamName.textContent = lang.clubName
+    const navClubName = document.getElementById('nav-club-name')
+    if (navClubName) navClubName.textContent = lang.navClubName
+    const langToggle = document.getElementById('lang-toggle')
+    if (langToggle) langToggle.textContent = lang.langToggle
+    const heroSubtitle = document.getElementById('hero-subtitle')
+    if (heroSubtitle) heroSubtitle.textContent = lang.heroSubtitle
+    const ctaButton = document.querySelector('.cta-button')
+    if (ctaButton) ctaButton.textContent = lang.learnMore
+    const aboutTitle = document.getElementById('about-title')
+    if (aboutTitle) aboutTitle.textContent = lang.aboutTitle
+    const aboutText = document.getElementById('about-text')
+    if (aboutText) aboutText.textContent = lang.aboutText
+    const visionTitle = document.getElementById('vision-title')
+    if (visionTitle) visionTitle.textContent = lang.visionTitle
+    const visionText = document.getElementById('vision-text')
+    if (visionText) visionText.textContent = lang.visionText
+    const valuesTitle = document.getElementById('values-title')
+    if (valuesTitle) valuesTitle.textContent = lang.valuesTitle
+    renderValues([], lang.values, lang.valuesDetails)
+    const sloganTitle = document.getElementById('slogan-title')
+    if (sloganTitle) sloganTitle.textContent = lang.sloganTitle
+    const sloganText = document.getElementById('slogan-text')
+    if (sloganText) sloganText.textContent = lang.sloganText
+    const founderTitle = document.getElementById('founder-title')
+    if (founderTitle) founderTitle.textContent = lang.founderTitle
+    const founderText = document.getElementById('founder-text')
+    if (founderText) founderText.textContent = lang.founderText
+    const galleryTitle = document.getElementById('gallery-title')
+    if (galleryTitle) galleryTitle.textContent = lang.galleryTitle
+    const contactTitle = document.getElementById('contact-title')
+    if (contactTitle) contactTitle.textContent = lang.contactTitle
+    const contactText = document.getElementById('contact-text')
+    if (contactText) contactText.textContent = lang.contactText
+    const footerText = document.getElementById('footer-text')
+    if (footerText) footerText.textContent = lang.footerText
 }
 
 document.getElementById('lang-toggle').addEventListener('click', () => {

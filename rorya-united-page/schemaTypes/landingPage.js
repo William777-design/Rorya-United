@@ -2,29 +2,43 @@ import {defineType, defineField} from 'sanity'
 
 export default defineType({
   name: 'landingPage',
-  title: 'Rorya United',
+  title: 'Landing Page',
   type: 'document',
   fields: [
     defineField({
-      name: 'Roryaunited',
-      title: 'name',
+      name: 'clubName',
+      title: 'Club Name',
       type: 'string',
-      validation: (Rule) => Rule.required(),
+      description: 'Main name displayed on the site hero and page title.',
+      validation: (Rule) => Rule.required().min(3),
+    }),
+    defineField({
+      name: 'navTitle',
+      title: 'Navigation Title',
+      type: 'string',
+      description: 'Shorter name shown in the navbar.',
+    }),
+    defineField({
+      name: 'Roryaunited',
+      title: 'Legacy Club Name',
+      type: 'string',
+      description: 'Legacy field kept for older content imports.',
     }),
     defineField({
       name: 'slug',
       title: 'Slug',
       type: 'slug',
       options: {
-        source: 'Roryaunited',
+        source: 'clubName',
         maxLength: 96,
       },
       validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: 'heroTitle',
-      title: 'Hero Title',
+      title: 'Hero Heading',
       type: 'string',
+      description: 'Main heading shown in the hero section.',
     }),
     defineField({
       name: 'heroSubtitle',
@@ -40,11 +54,6 @@ export default defineType({
       },
     }),
     defineField({
-      name: 'intro',
-      title: 'Intro Text',
-      type: 'text',
-    }),
-    defineField({
       name: 'ctaText',
       title: 'Call To Action Text',
       type: 'string',
@@ -55,8 +64,113 @@ export default defineType({
       type: 'url',
     }),
     defineField({
+      name: 'aboutTitle',
+      title: 'About Title',
+      type: 'string',
+    }),
+    defineField({
+      name: 'aboutText',
+      title: 'About Text',
+      type: 'text',
+    }),
+    defineField({
+      name: 'aboutImage',
+      title: 'About Image',
+      type: 'image',
+      options: {hotspot: true},
+    }),
+    defineField({
+      name: 'visionTitle',
+      title: 'Vision Title',
+      type: 'string',
+    }),
+    defineField({
+      name: 'visionText',
+      title: 'Vision Text',
+      type: 'text',
+    }),
+    defineField({
+      name: 'ourVision',
+      title: 'Vision Rich Text',
+      type: 'array',
+      of: [{type: 'block'}],
+    }),
+    defineField({
+      name: 'visionImage',
+      title: 'Vision Image',
+      type: 'image',
+      options: {hotspot: true},
+    }),
+    defineField({
+      name: 'valuesTitle',
+      title: 'Values Title',
+      type: 'string',
+    }),
+    defineField({
+      name: 'values',
+      title: 'Values',
+      type: 'array',
+      of: [
+        {
+          type: 'object',
+          fields: [
+            defineField({
+              name: 'valueTitle',
+              title: 'Value Title',
+              type: 'string',
+            }),
+            defineField({
+              name: 'valueDetail',
+              title: 'Value Detail',
+              type: 'text',
+            }),
+          ],
+        },
+      ],
+    }),
+    defineField({
+      name: 'sloganTitle',
+      title: 'Slogan Title',
+      type: 'string',
+    }),
+    defineField({
+      name: 'sloganText',
+      title: 'Slogan Text',
+      type: 'text',
+    }),
+    defineField({
+      name: 'founderTitle',
+      title: 'Founder Title',
+      type: 'string',
+    }),
+    defineField({
+      name: 'founderText',
+      title: 'Founder Text',
+      type: 'text',
+    }),
+    defineField({
+      name: 'galleryTitle',
+      title: 'Gallery Title',
+      type: 'string',
+    }),
+    defineField({
+      name: 'contactTitle',
+      title: 'Contact Title',
+      type: 'string',
+    }),
+    defineField({
+      name: 'contactText',
+      title: 'Contact Text',
+      type: 'text',
+    }),
+    defineField({
+      name: 'footerText',
+      title: 'Footer Text',
+      type: 'text',
+    }),
+    defineField({
       name: 'sections',
-      title: 'Page Sections',
+      title: 'Extra Page Sections',
       type: 'array',
       of: [
         {
@@ -83,22 +197,6 @@ export default defineType({
           ],
         },
       ],
-    }), 
-    defineField({
-      name: 'ourVision',
-      title: 'Our Vision',
-      type: 'array',
-      of: [
-        {
-          type: 'block',
-        },
-      ],
-    }),
-    defineField({
-      name: 'visionImage',
-      title: 'Vision Image',
-      type: 'image',
-      options: {hotspot: true},
     }),
     defineField({
       name: 'seoTitle',
@@ -113,7 +211,7 @@ export default defineType({
   ],
   preview: {
     select: {
-      title: 'Roryaunited',
+      title: 'clubName',
       subtitle: 'slug.current',
     },
   },
